@@ -34,11 +34,11 @@ public class FishAFishGame extends Game {
 
     private Texture load(String file) {
         Texture t = new Texture(Gdx.files.internal(file));
-        t.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest); // pixel art nítido
+        t.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         return t;
     }
 
-    /** Desenha texto com sombra. y = topo do texto. Deve ser chamado entre batch.begin/end. */
+
     public void text(String s, float x, float y, float scale, Color c, boolean center) {
         font.getData().setScale(scale);
         layout.setText(font, s);

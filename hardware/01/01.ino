@@ -1,96 +1,84 @@
 #include <BleKeyboard.h>
 
+#define LED 2
+
 BleKeyboard bleKeyboard;
 
-#define LED 2
-#define PUSHBUTTON 4
+const int pinA  = 18;
+const int pinB  = 19;
+const int pinSW = 21;
 
-#define ENCODER_A 22
-#define ENCODER_B 21
-#define ENCODER_BUTTON 23
+int encoderPosCount = 0;
 
-// Volatile variables used within the Interrupt Service Routine (ISR)
-volatile int encoderCounter = 0;
-volatile bool lastEncoderAState = HIGH;
-
-// Variables for switch debouncing
-unsigned long lastButtonPress = 0;
-const unsigned long DEBOUNCE_DELAY = 50; // Milliseconds
-
-void IRAM_ATTR readEncoder() {
-  // Read the current state of CLK
-  bool currentClkState = digitalRead(ENCODER_A);
-
-  // If CLK has changed state, a pulse happened
-  if (currentClkState != lastEncoderAState) {
-    // If the DT state is different than the CLK state, the encoder is rotating clockwise
-    if (digitalRead(ENCODER_B) != currentClkState) {
-      encoderCounter++;
-    } else {
-      encoderCounter--;
-    }
-    // Update the last state of CLK
-    lastEncoderAState = currentClkState;
-  }
-}
-
+int blinkTime = 5;            // seconds
+int LEDState = HIGH;
+unsigned long lastBlinkTime = 0;
 
 void setup() {
-    Serial.begin(115200);
-    pinMode(LED, OUTPUT);
-    pinMode(PUSHBUTTON, INPUT);
+  Serial.begin(115200);
+  pinMode(pinA, INPUT_PULLUP);
+  pinMode(pinB, INPUT_PULLUP);
+  pinMode(pinSW, INPUT_PULLUP);
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, HIGH);
 
-    pinMode(ENCODER_A, INPUT_PULLUP);
-    pinMode(ENCODER_B, INPUT_PULLUP);
-    pinMode(ENCODER_BUTTON, INPUT_PULLUP);
-
-    lastEncoderAState = digitalRead(ENCODER_A);
-
-    attachInterrupt(digitalPinToInterrupt(ENCODER_A), readEncoder, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(ENCODER_B), readEncoder, CHANGE);
-
-    Serial.println("Starting BLE work!");
-    bleKeyboard.begin();
+  Serial.println("Starting BLE work!");
+  bleKeyboard.begin();
 }
 
 void loop() {
-  if(bleKeyboard.isConnected()) {
-    // checkForPushButtonPress();
-
+  if (bleKeyboard.isConnected()) {
     digitalWrite(LED, HIGH);
 
-    static int lastEncoderAState = 0;
-    if(encoderCounter != lastEncoderAState){
-      lastEncoderAState = encoderCounter;
-      Serial.print("Position: ");
-      Serial.println(encoderCounter);
+    int dir = readEncoder();   // -1, 0, or +1 per detent
+    if (dir != 0) {
+      encoderPosCount += dir;
+      Serial.print(dir > 0 ? "rotated clockwise" : "rotated counterclockwise");
+      Serial.print(" | Position: ");
+      Serial.println(encoderPosCount);
+      bleKeyboard.write(' '); 
+      // Example: bleKeyboard.write(dir > 0 ? KEY_MEDIA_VOLUME_UP : KEY_MEDIA_VOLUME_DOWN);
     }
 
-    if(digitalRead(ENCODER_BUTTON) == LOW){
-      if(millis() - lastButtonPress > DEBOUNCE_DELAY){
-        Serial.println("Encoder button pressed!");
-        noInterrupts(); // Disable interrupts to prevent encoder reading during button press
-        encoderCounter = 0; // Reset the encoder counter
-        interrupts(); // Re-enable interrupts
-        lastButtonPress = millis();
-      }
+    if (switchPressed()) {
+      Serial.println("Switch pressed");
     }
-
+  } else {
+    // blink LED while not connected
+    if (millis() - lastBlinkTime > (unsigned long)blinkTime * 1000) {
+      lastBlinkTime = millis();
+      LEDState = !LEDState;
+      digitalWrite(LED, LEDState);
+    }
   }
-  else {
-    Serial.println("Not connected. Waiting 5 seconds...");
-    delay(5000);
-  }
-
 }
 
+// Quadrature decoder using a state table (handles bounce well)
+int readEncoder() {
+  static uint8_t state = 0;
+  static int8_t accum = 0;
+  static const int8_t table[16] = {0,-1,1,0, 1,0,0,-1, -1,0,0,1, 0,1,-1,0};
 
-void checkForPushButtonPress(){
-  int previousState = LOW;
-  int currentState = digitalRead(PUSHBUTTON);
-  if(currentState == HIGH && previousState == LOW) {
-    Serial.println("Button pressed!");
-    bleKeyboard.write(KEY_RETURN);
+  state = ((state << 2) | (digitalRead(pinA) << 1) | digitalRead(pinB)) & 0x0F;
+  accum += table[state];
+
+  if (accum >= 4)  { accum = 0; return 1; }   // one full detent
+  if (accum <= -4) { accum = 0; return -1; }
+  return 0;
+}
+
+// Non-blocking, returns true once per press
+bool switchPressed() {
+  static bool lastState = HIGH;
+  static unsigned long lastChange = 0;
+
+  bool now = digitalRead(pinSW);
+  bool pressed = false;
+
+  if (now != lastState && millis() - lastChange > 20) {  // 20 ms debounce
+    lastChange = millis();
+    if (now == LOW) pressed = true;   // LOW = pressed with INPUT_PULLUP
+    lastState = now;
   }
-  previousState = currentState;
+  return pressed;
 }

@@ -17,7 +17,7 @@ public class GameScreen extends ScreenAdapter {
     // Layout do cenário (coordenadas virtuais 640x360, y para cima)
     private static final float PIER_Y = 196f, WATER_Y = 180f;
     private static final float PLAYER_X = 24f, PLAYER_SCALE = 3f;
-    private static final float TIP_X = PLAYER_X + 93f, TIP_Y = PIER_Y + 70f; // ponta da vara
+    private static final float TIP_X = PLAYER_X + 93f, TIP_Y = PIER_Y + 70f;
     private static final float CAST_TIME = 0.7f;
     private static final Color YELLOW = new Color(1f, 0.9f, 0.35f, 1f);
     private static final Color ORANGE = new Color(1f, 0.6f, 0.2f, 1f);
@@ -52,7 +52,7 @@ public class GameScreen extends ScreenAdapter {
         stateTime = 0f;
     }
 
-    // ------------------------------------------------------------------ lógica
+
     private void update(float dt) {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.setScreen(new MenuScreen(game));
@@ -144,7 +144,7 @@ public class GameScreen extends ScreenAdapter {
         game.batch.setProjectionMatrix(camera.combined);
         game.shapes.setProjectionMatrix(camera.combined);
 
-        // 1) imagens
+
         game.batch.begin();
         game.batch.setColor(phase.sceneTint);
         game.batch.draw(game.scenery, 0f, 0f, Config.W, Config.H);
@@ -159,10 +159,10 @@ public class GameScreen extends ScreenAdapter {
         }
         game.batch.end();
 
-        // 2) linha, boia, barras e painéis
+
         drawShapes();
 
-        // 3) textos
+
         game.batch.begin();
         drawTexts();
         game.batch.end();
