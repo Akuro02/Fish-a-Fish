@@ -34,3 +34,13 @@ run {
         jvmArgs '-XstartOnFirstThread'
     }
 }
+
+sourceSets {
+    main {
+        resources {
+            // Includes the assets folder so assets/player.png is preserved inside the JAR
+            srcDirs += ["."]
+            include "assets/**"
+        }
+    }
+}

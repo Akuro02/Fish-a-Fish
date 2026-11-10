@@ -24,11 +24,11 @@ public class FishAFishGame extends Game {
         batch = new SpriteBatch();
         shapes = new ShapeRenderer();
         font = new BitmapFont();
-        player = load("player.png");
-        fish = load("fish.png");
-        scenery = load("scenery.png");
-        menu = load("menu.png");
-        button = load("button.png");
+        player = load("assets/player.png");
+        fish = load("assets/fish.png");
+        scenery = load("assets/scenery.png");
+        menu = load("assets/menu.png");
+        button = load("assets/button.png");
         setScreen(new MenuScreen(this));
     }
 
