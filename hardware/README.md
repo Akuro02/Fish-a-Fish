@@ -7,5 +7,5 @@ Graças a isso, o jogo pode ser jogado pelo hardware específico mas também pod
 ### Como configurar o ESP32 com arduino CLI
 - Dependencia: biblioteca ESP32-BLE-Keyboard
 - em `Fish-a-Fish/hardware/01` use
-    - Compilar o arquivo `.ino`: `arduino-cli compile --fqbn esp32:esp32:esp32-poe-iso .`
+    - Compilar o arquivo `.ino`: `arduino-cli compile --fqbn esp32:esp32:esp32-poe-iso --libraries ../libs .`
     - Fazer upload para o esp32: `arduino-cli upload -p {PORT} --fqbn esp32:esp32:esp32-poe-iso`
