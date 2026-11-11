@@ -27,20 +27,29 @@ application {
     mainClass = 'com.fishafish.DesktopLauncher'
 }
 
-// A pasta "assets" é o diretório de trabalho (Gdx.files.internal le de la)
+sourceSets {
+    main {
+        resources.srcDirs = ['assets']
+    }
+}
+
+tasks.register('fatJar', Jar) {
+    archiveBaseName.set('fish-a-fish')
+    archiveClassifier.set('all')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'com.fishafish.DesktopLauncher'
+    }
+    from sourceSets.main.output
+    from('assets') { into 'assets' }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+// A pasta "assets" é o diretório de trabalho (Gdx.files.internal lê de lá)
 run {
     workingDir = file('assets')
     if (System.getProperty('os.name').toLowerCase().contains('mac')) {
         jvmArgs '-XstartOnFirstThread'
-    }
-}
-
-sourceSets {
-    main {
-        resources {
-            // Includes the assets folder so assets/player.png is preserved inside the JAR
-            srcDirs += ["."]
-            include "assets/**"
-        }
     }
 }
